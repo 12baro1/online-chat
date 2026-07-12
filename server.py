@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_sock import Sock
 
@@ -6,27 +7,28 @@ sock = Sock(app)
 
 clients = []
 
-@sock.route('/chat')
+@sock.route("/chat")
 def chat(ws):
     clients.append(ws)
     try:
         while True:
-            message = ws.receive()
-            if message is None:
+            msg = ws.receive()
+            if msg is None:
                 break
-            for client in clients[:]:
+
+            for c in clients.copy():
                 try:
-                    client.send(message)
+                    c.send(msg)
                 except:
-                    if client in clients:
-                        clients.remove(client)
+                    clients.remove(c)
     finally:
         if ws in clients:
             clients.remove(ws)
 
 @app.route("/")
-def home():
-    return "Chat sunucusu çalışıyor."
+def index():
+    return "Chat sunucusu çalışıyor!"
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
